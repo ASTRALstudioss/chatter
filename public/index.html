@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Room Code</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Enter Room Code</h1>
+        <input id="roomCodeInput" type="text" placeholder="Enter room code...">
+        <button onclick="redirectToRoom()">Join Room</button>
+        <button onclick="createRoom()">Create Room</button>
+    </div>
+    <script>
+        function redirectToRoom() {
+            const roomCode = document.getElementById('roomCodeInput').value;
+            if (roomCode.trim() !== '') {
+                window.location.href = `/chat.html?room=${roomCode}`;
+            }
+        }
+
+        function createRoom() {
+            const socket = io();
+            socket.emit('createRoom', (roomCode) => {
+                if (roomCode) {
+                    window.location.href = `/chat.html?room=${roomCode}`;
+                } else {
+                    alert('Failed to create room. Please try again.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
