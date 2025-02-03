@@ -9,27 +9,32 @@
 <body>
     <div class="container">
         <h1>Enter Room Code</h1>
+        <input id="usernameInput" type="text" placeholder="Enter your username">
         <input id="roomCodeInput" type="text" placeholder="Enter room code...">
         <button onclick="redirectToRoom()">Join Room</button>
         <button onclick="createRoom()">Create Room</button>
     </div>
     <script>
         function redirectToRoom() {
+            const username = document.getElementById('usernameInput').value;
             const roomCode = document.getElementById('roomCodeInput').value;
-            if (roomCode.trim() !== '') {
-                window.location.href = `/chat.html?room=${roomCode}`;
+            if (username.trim() !== '' && roomCode.trim() !== '') {
+                window.location.href = `/chat.html?room=${roomCode}&username=${username}`;
             }
         }
 
         function createRoom() {
-            const socket = io();
-            socket.emit('createRoom', (roomCode) => {
-                if (roomCode) {
-                    window.location.href = `/chat.html?room=${roomCode}`;
-                } else {
-                    alert('Failed to create room. Please try again.');
-                }
-            });
+            const username = document.getElementById('usernameInput').value;
+            if (username.trim() !== '') {
+                const socket = io();
+                socket.emit('createRoom', (roomCode) => {
+                    if (roomCode) {
+                        window.location.href = `/chat.html?room=${roomCode}&username=${username}`;
+                    } else {
+                        alert('Failed to create room. Please try again.');
+                    }
+                });
+            }
         }
     </script>
 </body>

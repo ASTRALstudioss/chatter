@@ -38,7 +38,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('joinRoom', (roomCode) => {
+  socket.on('joinRoom', ({ roomCode, username }) => {
     const roomFile = path.join(MESSAGE_DIR, `${roomCode}.json`);
     console.log(`Checking for file: ${roomFile}`);
     if (fs.existsSync(roomFile)) {
@@ -46,8 +46,10 @@ io.on('connection', (socket) => {
         const messages = JSON.parse(fs.readFileSync(roomFile, 'utf-8'));
         console.log(`Loaded messages for room ${roomCode}`);
         socket.join(roomCode);
-        console.log(`User joined room: ${roomCode}`);
+        console.log(`User ${username} joined room: ${roomCode}`);
         socket.emit('history', messages);
+        // Notify others in the room
+        socket.to(roomCode).emit('message', { roomCode, message: `${username} has joined the room.` });
       } catch (err) {
         console.error(`Error reading room file: ${err}`);
       }
@@ -56,13 +58,15 @@ io.on('connection', (socket) => {
       try {
         fs.writeFileSync(roomFile, JSON.stringify([]));
         console.log(`Created file for room: ${roomFile}`);
+        socket.join(roomCode);
+        console.log(`User ${username} joined room: ${roomCode}`);
       } catch (err) {
         console.error(`Error creating room file: ${err}`);
       }
     }
   });
 
-  socket.on('message', ({ roomCode, message }) => {
+  socket.on('message', ({ roomCode, username, message }) => {
     const roomFile = path.join(MESSAGE_DIR, `${roomCode}.json`);
     console.log(`Checking for file to write message: ${roomFile}`);
     if (!fs.existsSync(roomFile)) {
@@ -75,10 +79,10 @@ io.on('connection', (socket) => {
     }
     try {
       const messages = JSON.parse(fs.readFileSync(roomFile, 'utf-8'));
-      messages.push({ message, timestamp: new Date() });
+      messages.push({ username, message, timestamp: new Date() });
       fs.writeFileSync(roomFile, JSON.stringify(messages));
       console.log(`Updated file for room ${roomCode}: ${roomFile}`);
-      io.to(roomCode).emit('message', { roomCode, message });
+      io.to(roomCode).emit('message', { roomCode, username, message });
     } catch (err) {
       console.error(`Error writing to room file: ${err}`);
     }
