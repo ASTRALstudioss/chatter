@@ -14,6 +14,8 @@ const MESSAGE_DIR = path.join(__dirname, 'messages');
 if (!fs.existsSync(MESSAGE_DIR)) {
   fs.mkdirSync(MESSAGE_DIR);
   console.log(`Created directory: ${MESSAGE_DIR}`);
+} else {
+  console.log(`Directory already exists: ${MESSAGE_DIR}`);
 }
 
 app.use(express.static('public'));
@@ -51,9 +53,12 @@ io.on('connection', (socket) => {
       }
     } else {
       console.log(`No file found for room ${roomCode}`);
-      console.log(`Creating file for room ${roomCode}`);
-      fs.writeFileSync(roomFile, JSON.stringify([]));
-      console.log(`Created file for room: ${roomFile}`);
+      try {
+        fs.writeFileSync(roomFile, JSON.stringify([]));
+        console.log(`Created file for room: ${roomFile}`);
+      } catch (err) {
+        console.error(`Error creating room file: ${err}`);
+      }
     }
   });
 
@@ -61,8 +66,12 @@ io.on('connection', (socket) => {
     const roomFile = path.join(MESSAGE_DIR, `${roomCode}.json`);
     console.log(`Checking for file to write message: ${roomFile}`);
     if (!fs.existsSync(roomFile)) {
-      console.log(`File does not exist, creating file: ${roomFile}`);
-      fs.writeFileSync(roomFile, JSON.stringify([]));
+      try {
+        console.log(`File does not exist, creating file: ${roomFile}`);
+        fs.writeFileSync(roomFile, JSON.stringify([]));
+      } catch (err) {
+        console.error(`Error creating room file: ${err}`);
+      }
     }
     try {
       const messages = JSON.parse(fs.readFileSync(roomFile, 'utf-8'));
@@ -81,5 +90,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(3000, () => {
-  console.log('Listening on port 3000');
+  console.log('Listening on http://localhost:3000');
 });
