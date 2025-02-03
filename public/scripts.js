@@ -1,68 +1,51 @@
-const socket = io('http://localhost:3000');
+const apiBaseUrl = 'https://your-vercel-app.vercel.app/public/api';
 let currentRoom = '';
 let username = '';
 
-const messages = document.getElementById('messages');
-const messageInput = document.getElementById('messageInput');
-
-function getRoomCodeFromUrl() {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('room');
+async function createRoom() {
+  const response = await fetch(`${apiBaseUrl}/createRoom`);
+  const data = await response.json();
+  if (data.roomCode) {
+    window.location.href = `/chat.html?room=${data.roomCode}&username=${username}`;
+  }
 }
 
-function getUsernameFromUrl() {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('username');
-}
-
-function joinRoom(roomCode, username) {
+async function joinRoom(roomCode, username) {
   if (roomCode.trim() !== '' && username.trim() !== '') {
+    const response = await fetch(`${apiBaseUrl}/joinRoom?roomCode=${roomCode}&username=${username}`);
+    const messages = await response.json();
     currentRoom = roomCode;
-    console.log(`Joining room: ${currentRoom}`);
-    socket.emit('joinRoom', { roomCode, username });
-    messages.innerHTML = ''; // Clear messages when switching rooms
+    if (!messages.error) {
+      messages.forEach((msg) => {
+        const messageElement = document.createElement('p');
+        messageElement.textContent = `${msg.username}: ${msg.message}`;
+        document.getElementById('messages').appendChild(messageElement);
+      });
+      document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+    }
   }
 }
 
-socket.on('history', (rows) => {
-  console.log('Received history:', rows);
-  rows.forEach((row) => {
-    const messageElement = document.createElement('p');
-    messageElement.textContent = `${row.username}: ${row.message}`;
-    messages.appendChild(messageElement);
-  });
-  messages.scrollTop = messages.scrollHeight;
-});
-
-socket.on('message', ({ roomCode, username, message }) => {
-  console.log(`Received message for room ${roomCode} from ${username}: ${message}`);
-  if (roomCode === currentRoom) {
-    const messageElement = document.createElement('p');
-    messageElement.textContent = `${username}: ${message}`;
-    messages.appendChild(messageElement);
-    messages.scrollTop = messages.scrollHeight;
-  }
-});
-
-function sendMessage() {
-  const message = messageInput.value;
+async function sendMessage() {
+  const message = document.getElementById('messageInput').value;
   if (message.trim() !== '') {
-    console.log(`Sending message: ${message}`);
-    socket.emit('message', { roomCode: currentRoom, username, message });
-    messageInput.value = '';
+    await fetch(`${apiBaseUrl}/sendMessage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ roomCode: currentRoom, username, message }),
+    });
+    document.getElementById('messageInput').value = '';
+    joinRoom(currentRoom, username); // Refresh messages
   }
 }
-
-messageInput.addEventListener('keypress', (event) => {
-  if (event.key === 'Enter') {
-    sendMessage();
-  }
-});
 
 window.onload = () => {
-  const roomCode = getRoomCodeFromUrl();
-  username = getUsernameFromUrl();
-  if (roomCode && username) {
-    joinRoom(roomCode, username);
+  const urlParams = new URLSearchParams(window.location.search);
+  currentRoom = urlParams.get('room');
+  username = urlParams.get('username');
+  if (currentRoom && username) {
+    joinRoom(currentRoom, username);
   }
 };
