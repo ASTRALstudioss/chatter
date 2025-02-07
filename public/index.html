@@ -3,39 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enter Room Code</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Login to Chat Room</title>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Enter Room Code</h1>
-        <input id="usernameInput" type="text" placeholder="Enter your username">
-        <input id="roomCodeInput" type="text" placeholder="Enter room code...">
-        <button onclick="redirectToRoom()">Join Room</button>
-        <button onclick="createRoom()">Create Room</button>
+    <div class="login-container">
+        <input type="text" id="usernameInput" placeholder="Enter your username">
+        <input type="text" id="roomInput" placeholder="Enter room name">
+        <button onclick="login()">Join Chat</button>
     </div>
-    <script>
-        function redirectToRoom() {
-            const username = document.getElementById('usernameInput').value;
-            const roomCode = document.getElementById('roomCodeInput').value;
-            if (username.trim() !== '' && roomCode.trim() !== '') {
-                window.location.href = `/chat.html?room=${roomCode}&username=${username}`;
-            }
-        }
-
-        function createRoom() {
-            const username = document.getElementById('usernameInput').value;
-            if (username.trim() !== '') {
-                const socket = io();
-                socket.emit('createRoom', (roomCode) => {
-                    if (roomCode) {
-                        window.location.href = `/chat.html?room=${roomCode}&username=${username}`;
-                    } else {
-                        alert('Failed to create room. Please try again.');
-                    }
-                });
-            }
-        }
-    </script>
+    <script src="js/login.js"></script>
 </body>
 </html>
